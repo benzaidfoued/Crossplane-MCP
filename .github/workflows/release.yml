@@ -46,7 +46,7 @@ jobs:
           tags: ${{ steps.image.outputs.name }}:${{ github.ref_name }}
           provenance: true
           sbom: true
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-name: ${{ steps.image.outputs.name }}
           subject-digest: ${{ steps.build.outputs.digest }}
@@ -63,7 +63,7 @@ jobs:
           helm push dist/crossplane-compass-*.tgz oci://ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/charts
           cd dist
           sha256sum *.whl *.tar.gz *.tgz > SHA256SUMS
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'dist/*'
       - name: Publish GitHub release
