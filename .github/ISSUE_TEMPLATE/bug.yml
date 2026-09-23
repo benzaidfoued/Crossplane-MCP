@@ -1,0 +1,19 @@
+name: Bug report
+description: Report a reproducible problem without credentials or private cloud identifiers
+title: "bug: "
+body:
+  - type: textarea
+    id: versions
+    attributes:
+      label: Server, Crossplane, Kubernetes and provider versions
+    validations: {required: true}
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction and expected behavior
+      description: Redact credentials, manifests and events before sharing.
+    validations: {required: true}
+  - type: textarea
+    id: observed
+    attributes: {label: Observed result and safe logs}
+    validations: {required: true}

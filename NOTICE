@@ -1,0 +1,9 @@
+Crossplane Compass
+Copyright 2026 Crossplane Compass contributors
+
+Independent implementation inspired by the operational goals of
+https://github.com/shilucloud/crossplane-mcp-server
+Reference review: docs/reference-review.md.
+
+Crossplane and Kubernetes names identify upstream projects. This project is
+independent and does not imply endorsement by their maintainers.

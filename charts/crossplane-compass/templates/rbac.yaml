@@ -1,0 +1,51 @@
+{{- if .Values.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "compass.sa" . }}
+  {{- with .Values.serviceAccount.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+---
+{{- end }}
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Namespace }}-{{ include "compass.fullname" . }}
+rules:
+  - apiGroups: [apiextensions.k8s.io]
+    resources: [customresourcedefinitions]
+    verbs: [get, list]
+  - apiGroups: [apiextensions.crossplane.io, pkg.crossplane.io, ops.crossplane.io, protection.crossplane.io]
+    resources: ["*"]
+    verbs: [get, list]
+  {{- if .Values.access.groups }}
+  - apiGroups: {{- toYaml .Values.access.groups | nindent 6 }}
+    resources: ["*"]
+    verbs: [get, list]
+  {{- end }}
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [get, list]
+  {{- if .Values.server.enableServerDryRun }}
+  {{- range .Values.rbac.dryRunRules }}
+  - apiGroups: {{- toYaml .apiGroups | nindent 6 }}
+    resources: {{- toYaml .resources | nindent 6 }}
+    verbs: [patch]
+  {{- end }}
+  {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Release.Namespace }}-{{ include "compass.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Namespace }}-{{ include "compass.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "compass.sa" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

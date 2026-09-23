@@ -1,0 +1,89 @@
+{{- if and .Values.server.enableServerDryRun (empty .Values.rbac.dryRunRules) }}
+{{- fail "server.enableServerDryRun requires explicit rbac.dryRunRules" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "compass.fullname" . }}
+  labels: {{- include "compass.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "compass.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "compass.labels" . | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+      annotations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "compass.sa" . }}
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: compass
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}@{{ .Values.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --transport=http
+            - --host=0.0.0.0
+            - --port=8080
+            - --token-file=/var/run/compass-auth/{{ .Values.auth.key }}
+            {{- if not .Values.access.clusterScoped }}
+            - --deny-cluster-scoped
+            {{- end }}
+            {{- if .Values.server.enableServerDryRun }}
+            - --enable-server-dry-run
+            {{- end }}
+          env:
+            - name: COMPASS_GROUPS
+              value: {{ join "," .Values.access.groups | quote }}
+            - name: COMPASS_NAMESPACES
+              value: {{ join "," .Values.access.namespaces | quote }}
+            - name: COMPASS_ALLOWED_HOSTS
+              value: {{ printf "localhost:*,127.0.0.1:*,%s:*,%s.%s:*,%s.%s.svc:*,%s.%s.svc.cluster.local:*%s" (include "compass.fullname" .) (include "compass.fullname" .) .Release.Namespace (include "compass.fullname" .) .Release.Namespace (include "compass.fullname" .) .Release.Namespace (ternary (printf ",%s" (join "," .Values.server.additionalAllowedHosts)) "" (not (empty .Values.server.additionalAllowedHosts))) | quote }}
+          ports: [{name: http, containerPort: 8080}]
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          startupProbe:
+            httpGet: {path: /healthz, port: http}
+            failureThreshold: 30
+            periodSeconds: 2
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: {path: /readyz, port: http}
+            timeoutSeconds: 25
+            periodSeconds: 30
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - {name: auth, mountPath: /var/run/compass-auth, readOnly: true}
+      volumes:
+        - name: auth
+          secret:
+            secretName: {{ required "auth.existingSecret is required" .Values.auth.existingSecret }}
+            defaultMode: 0440
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}

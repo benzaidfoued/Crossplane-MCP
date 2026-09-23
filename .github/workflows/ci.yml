@@ -1,0 +1,65 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.17'
+          python-version: ${{ matrix.python }}
+      - run: uv sync --frozen
+      - run: make check
+      - run: uv build
+      - uses: azure/setup-helm@v4.3.0
+        with:
+          version: v3.19.0
+      - run: helm lint charts/crossplane-compass --strict
+      - run: uv run python scripts/check_chart.py
+      - run: uv export --frozen --no-dev --no-emit-project > /tmp/requirements.txt
+      - run: uv run pip-audit -r /tmp/requirements.txt --require-hashes --disable-pip
+  cluster:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crossplane: ['1.20.0', '2.0.0']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.17'
+          python-version: '3.12'
+      - uses: azure/setup-helm@v4.3.0
+        with:
+          version: v3.19.0
+      - uses: helm/kind-action@v1.12.0
+        with:
+          cluster_name: compass
+      - run: |
+          helm repo add crossplane-stable https://charts.crossplane.io/stable
+          helm upgrade --install crossplane crossplane-stable/crossplane --namespace crossplane-system --create-namespace --version '${{ matrix.crossplane }}' --wait --timeout 5m
+          uv sync --frozen
+          uv run python scripts/cluster_smoke.py --crossplane '${{ matrix.crossplane }}'
+      - run: |
+          docker build -t crossplane-compass:0.1.0 .
+          kind load docker-image crossplane-compass:0.1.0 --name compass
+          kubectl create secret generic crossplane-compass-auth --from-literal=token=ci-only-disposable-token-01234567890123456789
+          helm upgrade --install compass charts/crossplane-compass --set fullnameOverride=crossplane-compass --set access.groups[0]=compass.example.org --wait --timeout 3m
+          kubectl port-forward svc/crossplane-compass 8080:8080 >/tmp/port-forward.log 2>&1 &
+          uv run python scripts/http_smoke.py
+      - if: failure()
+        run: kubectl get pods -A; kubectl get events -A --sort-by=.lastTimestamp

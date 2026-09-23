@@ -1,0 +1,8 @@
+Crossplane Compass serves authenticated MCP at /mcp.
+The Secret {{ .Values.auth.existingSecret }} must already contain key {{ .Values.auth.key }} (32+ random characters).
+
+kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "compass.fullname" . }} 8080:{{ .Values.service.port }}
+
+Use http://localhost:8080/mcp with an Authorization: Bearer header.
+Default chart permissions do not include Secrets or persistent writes.
+Add exact XR/provider API groups in access.groups. See docs/installation.md.

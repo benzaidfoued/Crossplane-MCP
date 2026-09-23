@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "compass.fullname" . }}
+spec:
+  type: {{ .Values.service.type }}
+  selector: {{- include "compass.labels" . | nindent 4 }}
+  ports:
+    - {name: http, port: {{ .Values.service.port }}, targetPort: http}

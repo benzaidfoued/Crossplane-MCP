@@ -1,0 +1,47 @@
+replicaCount: 1
+image:
+  # Build locally or override with the GHCR image published by your repository.
+  repository: crossplane-compass
+  tag: "" # Defaults to Chart.appVersion.
+  digest: "" # Overrides tag when set.
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+auth:
+  existingSecret: crossplane-compass-auth
+  key: token
+access:
+  # Exact additional API groups, including your XR and provider groups.
+  groups: []
+  # Empty permits every namespace that Kubernetes RBAC permits.
+  namespaces: []
+  clusterScoped: true
+server:
+  enableServerDryRun: false
+  # Include external gateway DNS names here. No wildcard host by default.
+  additionalAllowedHosts: []
+service:
+  type: ClusterIP
+  port: 8080
+rbac:
+  create: true
+  # Grant patch only on these explicit resources when enabling server dry-run.
+  # Kubernetes RBAC cannot distinguish dry-run from a real write; use a dedicated SA.
+  dryRunRules: []
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+resources:
+  requests: {cpu: 100m, memory: 128Mi}
+  limits: {cpu: "1", memory: 512Mi}
+networkPolicy:
+  enabled: true
+  # Clients in this release namespace must carry this pod label.
+  clientPodLabels: {compass-client: "true"}
+  apiPorts: [443, 6443]
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

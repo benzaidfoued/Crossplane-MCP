@@ -1,0 +1,34 @@
+# Replace YOUR_OWNER after publishing the OCI chart. Supply the auth Secret separately.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: crossplane-compass
+  namespace: flux-system
+spec:
+  interval: 10m
+  url: oci://ghcr.io/YOUR_OWNER/charts/crossplane-compass
+  ref:
+    tag: 0.1.0
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: crossplane-compass
+  namespace: flux-system
+spec:
+  interval: 10m
+  targetNamespace: compass
+  install:
+    createNamespace: true
+  chartRef:
+    kind: OCIRepository
+    name: crossplane-compass
+  values:
+    fullnameOverride: crossplane-compass
+    auth:
+      existingSecret: crossplane-compass-auth
+    access:
+      groups:
+        - platform.example.org
+        - cosmosdb.azure.upbound.io
+      namespaces: [team-a]

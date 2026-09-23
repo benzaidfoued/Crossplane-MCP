@@ -1,0 +1,11 @@
+name: Feature request
+description: Propose a concrete Crossplane workflow improvement
+body:
+  - type: textarea
+    id: problem
+    attributes: {label: User problem and example workflow}
+    validations: {required: true}
+  - type: textarea
+    id: acceptance
+    attributes: {label: Expected result and acceptance criteria}
+    validations: {required: true}
