@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 license = "Apache-2.0"
 authors = [{name = "Crossplane Compass contributors"}]
 keywords = ["crossplane", "mcp", "kubernetes", "gitops"]
-dependencies = ["mcp>=1.30,<2", "kubernetes>=36,<37", "PyYAML>=6,<7", "jsonschema>=4,<5"]
+dependencies = ["mcp>=1.30,<3", "kubernetes>=36,<37", "PyYAML>=6,<7", "jsonschema>=4,<5"]
 [project.scripts]
 crossplane-compass = "crossplane_compass.server:main"
 [build-system]
