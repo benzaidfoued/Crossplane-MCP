@@ -16,7 +16,7 @@ jobs:
       matrix:
         python: ['3.12', '3.13']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           version: '0.12.17'
@@ -38,7 +38,7 @@ jobs:
       matrix:
         crossplane: ['1.20.0', '2.0.0']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           version: '0.12.17'
