@@ -11,7 +11,7 @@ dependencies = ["mcp>=1.30,<3", "kubernetes>=36,<37", "PyYAML>=6,<7", "jsonschem
 [project.scripts]
 crossplane-compass = "crossplane_compass.server:main"
 [build-system]
-requires = ["uv_build>=0.12.17,<0.13"]
+requires = ["uv_build>=0.12.17,<0.14"]
 build-backend = "uv_build"
 [dependency-groups]
 dev = ["pytest>=8", "pytest-asyncio>=1", "pytest-cov>=6", "ruff>=0.14", "build>=1", "pip-audit>=2"]
